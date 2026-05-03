@@ -11,10 +11,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: modules } = await supabase.from('modules').select('*').eq('is_published', true).order('order_index')
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="dash-layout">
       <DashboardSidebar profile={profile} modules={modules ?? []} />
-      <main style={{ flex: 1, minHeight: '100vh', overflowY: 'auto', paddingTop: 0 }}>
-        <style>{`@media (max-width: 1024px) { main { paddingTop: 64px !important; } }`}</style>
+      <main className="dash-main">
         {children}
       </main>
     </div>

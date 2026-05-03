@@ -115,11 +115,11 @@ export default function LandingPage() {
 
       {/* NAV */}
       <div style={S.navWrap}>
-        <nav style={S.nav}>
+        <nav className="landing-nav">
           <div style={S.logo}>
             <span style={S.logoAccent}>&lt;</span>de0a10k<span style={S.logoAccent}>&gt;</span>
           </div>
-          <div style={S.navLinks}>
+          <div className="landing-nav-links">
             <span style={S.navLink}>Módulos</span>
             <span style={S.navLink}>Resultados</span>
             <Link href="/auth/login" style={S.navLink}>Entrar</Link>
@@ -151,7 +151,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="animate-up delay-3" style={S.heroBtns}>
+        <div className="hero-btns animate-up delay-3">
           <Link href="/auth/register" className="btn-primary">
             Empezar el curso — es gratis →
           </Link>
@@ -161,7 +161,7 @@ export default function LandingPage() {
         </div>
 
         {/* Stats grid — OneAway border-collapse style */}
-        <div className="animate-up delay-4" style={S.statsGrid}>
+        <div className="stats-grid animate-up delay-4">
           {stats.map(s => (
             <div key={s.label} style={S.statCell}>
               <div style={S.statVal}>{s.value}</div>
@@ -204,7 +204,7 @@ export default function LandingPage() {
         <h2 style={S.sectionH}>7 módulos.<br />Un sistema completo.</h2>
         <p style={S.sectionSub}>Cada módulo construye sobre el anterior. Al terminar tenés una empresa real y tus primeros clientes.</p>
 
-        <div style={S.modsGrid}>
+        <div className="mods-grid">
           {modules.map(m => (
             <div key={m.n} style={S.modCell}>
               <div style={S.modN}>{m.n}</div>
@@ -242,7 +242,7 @@ export default function LandingPage() {
         <h2 style={S.sectionH}>Todo para ejecutar,<br />no teorizar.</h2>
         <p style={S.sectionSub}>No es otro curso teórico. Cada módulo tiene workbooks interactivos, checklists y quizzes de refuerzo.</p>
 
-        <div style={S.inclGrid}>
+        <div className="incl-grid">
           {included.map((item, i) => (
             <div key={item} style={{
               ...S.inclItem,

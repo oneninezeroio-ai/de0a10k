@@ -74,7 +74,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="animate-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)', marginBottom: '48px' }}>
+      <div className="kpis-grid animate-up delay-1" style={{ marginBottom: '48px' }}>
         {kpis.map(k => (
           <div key={k.label} style={{ padding: '20px 16px', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', fontWeight: 700, color: 'var(--text-1)', letterSpacing: '-0.025em', marginBottom: '4px' }}>
