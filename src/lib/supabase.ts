@@ -58,6 +58,18 @@ export type Database = {
           updated_at: string
         }
       }
+      lesson_resources: {
+        Row: {
+          id: string
+          lesson_id: string
+          title: string
+          type: string
+          url: string
+          description: string | null
+          order_index: number
+          created_at: string
+        }
+      }
       user_progress: {
         Row: {
           id: string
@@ -89,6 +101,51 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['workbook_responses']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['workbook_responses']['Insert']>
       }
+      checklist_progress: {
+        Row: {
+          id: string
+          user_id: string
+          module_id: string
+          item_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['checklist_progress']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['checklist_progress']['Insert']>
+      }
+      quizzes: {
+        Row: {
+          id: string
+          lesson_id: string
+          title: string
+          pass_score: number
+          time_limit_secs: number | null
+          created_at: string
+          updated_at: string
+        }
+      }
+      quiz_questions: {
+        Row: {
+          id: string
+          quiz_id: string
+          question_text: string
+          question_type: string
+          explanation: string | null
+          order_index: number
+          created_at: string
+        }
+      }
+      quiz_options: {
+        Row: {
+          id: string
+          question_id: string
+          option_text: string
+          is_correct: boolean
+          order_index: number
+        }
+      }
       quiz_results: {
         Row: {
           id: string
@@ -103,6 +160,8 @@ export type Database = {
           completed_at: string
           created_at: string
         }
+        Insert: Omit<Database['public']['Tables']['quiz_results']['Row'], 'id' | 'completed_at' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['quiz_results']['Insert']>
       }
       achievements: {
         Row: {
