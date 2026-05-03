@@ -1,9 +1,10 @@
-// src/app/dashboard/page.tsx — Server Component, no event handlers
+// src/app/dashboard/page.tsx — Server Component
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight, Lock } from 'lucide-react'
 import { MODULE_CHECKLISTS } from '@/lib/module-checklists'
+import type { Module, Lesson, UserProgress, Profile } from '@/lib/types'
 
 export const metadata = { title: 'Dashboard' }
 
@@ -12,43 +13,49 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const [{ data: profile }, { data: modules }, { data: achievements }] = await Promise.all([
+  const [{ data: profileRaw }, { data: modulesRaw }, { data: achievementsRaw }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('modules').select('*').eq('is_published', true).order('order_index'),
     supabase.from('user_achievements').select('*, achievements(*)').eq('user_id', user.id),
   ])
 
-  const { data: lessons } = await supabase.from('lessons').select('id, module_id').eq('is_published', true)
-  const { data: progressData } = await supabase.from('user_progress').select('*').eq('user_id', user.id)
+  const profile = profileRaw as Profile | null
+  const modules = (modulesRaw ?? []) as Module[]
+  const achievements = achievementsRaw ?? []
 
-  const progressMap = new Map(progressData?.map(p => [p.lesson_id, p]) ?? [])
+  const { data: lessonsRaw } = await supabase.from('lessons').select('id, module_id').eq('is_published', true)
+  const { data: progressRaw } = await supabase.from('user_progress').select('*').eq('user_id', user.id)
+
+  const lessons = (lessonsRaw ?? []) as Pick<Lesson, 'id' | 'module_id'>[]
+  const progressList = (progressRaw ?? []) as UserProgress[]
+
+  const progressMap = new Map<string, UserProgress>(progressList.map((p: UserProgress) => [p.lesson_id, p]))
   const lessonsByModule = new Map<string, string[]>()
-  lessons?.forEach(l => {
+  lessons.forEach((l: Pick<Lesson, 'id' | 'module_id'>) => {
     if (!lessonsByModule.has(l.module_id)) lessonsByModule.set(l.module_id, [])
     lessonsByModule.get(l.module_id)!.push(l.id)
   })
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'estudiante'
-  const totalLessons = lessons?.length ?? 0
-  const totalCompleted = progressData?.filter(p => p.status === 'completed').length ?? 0
+  const totalLessons = lessons.length
+  const totalCompleted = progressList.filter((p: UserProgress) => p.status === 'completed').length
   const overallPct = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0
 
-  const nextModule = modules?.find(m => {
+  const nextModule = modules.find((m: Module) => {
     const mLessons = lessonsByModule.get(m.id) ?? []
     return mLessons.some(lid => progressMap.get(lid)?.status !== 'completed')
   })
 
   const kpis = [
     { label: 'Lecciones', value: `${totalCompleted}/${totalLessons}` },
-    { label: 'Logros',    value: `${achievements?.length ?? 0}/13` },
-    { label: 'Módulos',   value: `${modules?.filter(m => { const ml = lessonsByModule.get(m.id)??[]; return ml.length>0 && ml.every(lid => progressMap.get(lid)?.status==='completed') }).length ?? 0}/${modules?.length ?? 0}` },
+    { label: 'Logros',    value: `${achievements.length}/13` },
+    { label: 'Módulos',   value: `${modules.filter((m: Module) => { const ml = lessonsByModule.get(m.id) ?? []; return ml.length > 0 && ml.every(lid => progressMap.get(lid)?.status === 'completed') }).length}/${modules.length}` },
     { label: 'Progreso',  value: `${overallPct}%` },
   ]
 
   return (
     <div style={{ minHeight: '100vh', padding: 'clamp(24px,4vw,48px)', paddingBottom: '80px' }}>
 
-      {/* HEADER */}
       <div className="animate-up" style={{ marginBottom: '48px', paddingBottom: '40px', borderBottom: '1px solid var(--border)' }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-5)', marginBottom: '12px' }}>
           Bienvenido de vuelta
@@ -67,7 +74,6 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* KPIs — border grid */}
       <div className="animate-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)', marginBottom: '48px' }}>
         {kpis.map(k => (
           <div key={k.label} style={{ padding: '20px 16px', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
@@ -81,7 +87,6 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* CONTINUE — CSS hover via class */}
       {nextModule && (
         <div className="animate-up delay-2" style={{ marginBottom: '40px' }}>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-5)', marginBottom: '16px' }}>
@@ -104,7 +109,6 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* MODULES LIST — CSS hover via .link-row */}
       <div className="animate-up delay-3">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-5)' }}>
@@ -116,7 +120,7 @@ export default async function DashboardPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {modules?.map((mod, idx) => {
+          {modules.map((mod: Module, idx: number) => {
             const mLessons = lessonsByModule.get(mod.id) ?? []
             const mCompleted = mLessons.filter(lid => progressMap.get(lid)?.status === 'completed').length
             const mTotal = mLessons.length
@@ -129,19 +133,11 @@ export default async function DashboardPage() {
                 key={mod.id}
                 href={`/courses/${mod.slug}`}
                 className="link-row animate-up"
-                style={{
-                  gridTemplateColumns: '44px 1fr auto',
-                  gap: '12px',
-                  animationDelay: `${0.05 + idx * 0.04}s`,
-                  opacity: 0,
-                }}
+                style={{ gridTemplateColumns: '44px 1fr auto', gap: '12px', animationDelay: `${0.05 + idx * 0.04}s`, opacity: 0 }}
               >
-                {/* Number */}
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-5)', letterSpacing: '0.04em' }}>
                   {String(mod.order_index).padStart(2, '0')}
                 </span>
-
-                {/* Info */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '14px' }}>{mod.icon}</span>
@@ -169,7 +165,6 @@ export default async function DashboardPage() {
                     </div>
                   )}
                 </div>
-
                 <ChevronRight size={14} style={{ color: 'var(--text-5)', flexShrink: 0 }} />
               </Link>
             )
@@ -177,7 +172,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* GOAL */}
       {profile?.goal_amount && (
         <div className="animate-up delay-4" style={{ marginTop: '48px', paddingTop: '40px', borderTop: '1px solid var(--border)' }}>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-5)', marginBottom: '16px' }}>
@@ -188,7 +182,7 @@ export default async function DashboardPage() {
             <span style={{ color: 'var(--accent)' }}>${profile.goal_amount.toLocaleString()} USD</span>
             {profile.goal_reason && (
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-3)', fontWeight: 400 }}>
-                {' '}— "{profile.goal_reason}"
+                {' '}— &quot;{profile.goal_reason}&quot;
               </span>
             )}
           </p>

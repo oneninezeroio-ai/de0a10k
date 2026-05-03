@@ -30,7 +30,7 @@ export default function ModuleChecklistComponent({ checklist, userId, moduleId, 
   }, [storageKey])
 
   const persist = useCallback((next: Set<string>) => {
-    try { localStorage.setItem(storageKey, JSON.stringify([...next])) } catch {}
+    try { localStorage.setItem(storageKey, JSON.stringify(Array.from(next))) } catch {}
   }, [storageKey])
 
   function toggle(id: string, critical: boolean) {

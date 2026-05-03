@@ -13,17 +13,17 @@ export default async function LessonPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()
 
-  const [{ data: lesson }, { data: module }] = await Promise.all([
+  const [{ data: lesson }, { data: moduleData }] = await Promise.all([
     supabase.from('lessons').select('*, lesson_resources(*)').eq('id', params.lessonId).single(),
     supabase.from('modules').select('*').eq('slug', params.slug).single(),
   ])
-  if (!lesson || !module) notFound()
+  if (!lesson || !moduleData) notFound()
 
   const { data: allLessons } = await supabase
     .from('lessons').select('id, title, order_index, slug')
-    .eq('module_id', module.id).eq('is_published', true).order('order_index')
+    .eq('module_id', moduleData.id).eq('is_published', true).order('order_index')
 
-  const currentIdx = allLessons?.findIndex(l => l.id === lesson.id) ?? -1
+  const currentIdx = allLessons?.findIndex((l: { id: string }) => l.id === lesson.id) ?? -1
   const prevLesson = currentIdx > 0 ? allLessons?.[currentIdx - 1] : null
   const nextLesson = currentIdx < (allLessons?.length ?? 0) - 1 ? allLessons?.[currentIdx + 1] : null
 
@@ -35,7 +35,7 @@ export default async function LessonPage({ params }: PageProps) {
       {/* Top nav bar */}
       <div style={{ position: 'sticky', top: 0, zIndex: 40, background: 'var(--bg-1)', borderBottom: '1px solid var(--border)', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <Link href={`/courses/${params.slug}`} className="btn-ghost" style={{ padding: '6px 12px', fontSize: '11px', flexShrink: 0 }}>
-          <ArrowLeft size={13} /> {module.title}
+          <ArrowLeft size={13} /> {moduleData.title}
         </Link>
         <div style={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
           <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -59,10 +59,10 @@ export default async function LessonPage({ params }: PageProps) {
       {/* Main content + sidebar */}
       <div style={{ display: 'flex' }}>
         <LessonContent
-          lesson={lesson}
-          module={module}
+          lesson={lesson as any}
+          module={moduleData}
           userId={user.id}
-          progress={progress}
+          progress={progress ?? null}
           nextLesson={nextLesson ?? null}
           moduleSlug={params.slug}
           quiz={quiz ?? null}
@@ -71,7 +71,7 @@ export default async function LessonPage({ params }: PageProps) {
           lesson={lesson}
           allLessons={allLessons ?? []}
           moduleSlug={params.slug}
-          progress={progress}
+          progress={progress ?? null}
         />
       </div>
     </div>
